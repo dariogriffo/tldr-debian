@@ -1,0 +1,97 @@
+name: Build tldr for Debian
+
+on:
+  workflow_dispatch:
+    inputs:
+      tldr_version:
+        description: The version of tldr (tlrc) to build.
+        type: string
+        required: true
+      build_version:
+        description: The build version.
+        type: string
+        required: true
+      architecture:
+        description: Architecture to build (amd64, arm64, or 'all' for all architectures)
+        type: choice
+        default: 'all'
+        options:
+          - 'all'
+          - 'amd64'
+          - 'arm64'
+
+permissions:
+  contents: write
+
+jobs:
+  build-tldr:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tldr-debian
+        uses: actions/checkout@v4
+
+      - name: Validate upstream license permits paid distribution
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ./validate_license.sh ${{ inputs.tldr_version }}
+
+      - name: Build tldr
+        run: ./build_debian.sh ${{ inputs.tldr_version }} ${{ inputs.build_version }} ${{ inputs.architecture }}
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifact
+          path: tldr_*.deb
+
+  build-src:
+    name: Build Source Packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tldr-debian
+        uses: actions/checkout@v4
+
+      - name: Install dpkg-dev
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends dpkg-dev devscripts wget ca-certificates
+
+      - name: Build source packages
+        run: ./build_src.sh ${{ inputs.tldr_version }} ${{ inputs.build_version }}
+
+      - name: Upload Source Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-artifact
+          path: |
+            tldr_*.dsc
+            tldr_*.orig.tar.gz
+            tldr_*.debian.tar.xz
+
+  release-tldr:
+    name: Release tldr for Debian
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    needs: [build-tldr, build-src]
+    steps:
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: artifact
+
+      - name: Download Source Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: source-artifact
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: false
+          files: |
+            tldr_*.deb
+            tldr_*.dsc
+            tldr_*.orig.tar.gz
+            tldr_*.debian.tar.xz
+          name: ${{ inputs.tldr_version }}+${{ inputs.build_version }}
+          tag_name: ${{ inputs.tldr_version }}+${{ inputs.build_version }}
+          fail_on_unmatched_files: true

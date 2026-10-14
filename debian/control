@@ -1,0 +1,23 @@
+Source: tldr
+Section: utils
+Priority: optional
+Maintainer: Dario Griffo <dariogriffo@gmail.com>
+Build-Depends: debhelper-compat (= 13), wget, ca-certificates
+Standards-Version: 4.6.2
+Homepage: https://tldr.sh/tlrc
+Rules-Requires-Root: no
+
+Package: tldr
+Architecture: amd64 arm64
+Depends: ${misc:Depends}
+Conflicts: tealdeer, tlrc
+Replaces: tealdeer
+Description: official tldr client written in Rust (tlrc)
+ tldr shows simplified, example-driven help pages for command-line tools, taken
+ from the community-maintained tldr-pages project. This package ships tlrc, the
+ official Rust client: a single static binary with an offline, self-updating
+ page cache, platform-specific and translated pages, and a configurable output.
+ .
+ The command is tldr. The package includes the man page and shell completions
+ for bash, fish and zsh. The first run downloads the pages cache from the
+ internet.

@@ -1,0 +1,43 @@
+tldr (FULL_VERSION) DIST; urgency=low
+
+  ## v1.13.1 (2026-05-22)
+
+  - Updated rustls-webpki to fix vulnerabilities.
+    ([#172](https://github.com/tldr-pages/tlrc/pull/172))
+  - Fix too many spaces in `--info` output.
+  - Binaries for aarch64 systems are now available on GitHub releases.
+    ([#173](https://github.com/tldr-pages/tlrc/pull/173))
+
+  ## v1.13.0 (2026-03-31)
+
+  - New command-line option `--edit` and config option `output.edit_link`,
+    which print a link to edit the shown page in the GitHub web editor.
+  - New command-line option `-s`, `--search`.
+    ([#160](https://github.com/tldr-pages/tlrc/pull/160))
+
+  ## v1.12.0 (2025-09-30)
+
+  - New config option `cache.defer_auto_update` to perform automatic updates
+    after the page is shown. ([#125](https://github.com/tldr-pages/tlrc/pull/125))
+  - Verbose mode (`--verbose`).
+  - Fix panic on `--config-path` when `TLRC_CONFIG` is set to an invalid value.
+  - Don't print colors if stderr is not a terminal.
+  - `--clean-cache` is now interactive: choose which directories to delete.
+
+  ## v1.11.1 (2025-05-05)
+
+  - Increase the HTTP request timeout to 30 seconds.
+    ([#128](https://github.com/tldr-pages/tlrc/pull/128))
+  - Fix issues with proxies.
+
+  ## v1.11.0 (2025-03-16)
+
+  - Fix loading TLS certificates from the OS store.
+    ([#111](https://github.com/tldr-pages/tlrc/pull/111))
+  - New config option `output.line_length` (default 0 = terminal width).
+    ([#120](https://github.com/tldr-pages/tlrc/pull/120))
+  - Client specification v2.3: new `--short-options` and `--long-options`
+    command-line options and the `output.option_style` config option.
+
+  Older entries have been trimmed. The complete upstream changelog lives at
+  https://github.com/tldr-pages/tlrc/releases

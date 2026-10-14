@@ -1,0 +1,43 @@
+#!/usr/bin/make -f
+DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
+TLDR_VERSION := $(shell dpkg-parsechangelog -S Version | sed 's/[-~].*//')
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+
+override_dh_auto_build:
+	@arch="$(DEB_HOST_ARCH)"; \
+	case "$$arch" in \
+		amd64)   TLRC_RELEASE="tlrc-v$(TLDR_VERSION)-x86_64-unknown-linux-musl" ;; \
+		arm64)   TLRC_RELEASE="tlrc-v$(TLDR_VERSION)-aarch64-unknown-linux-musl" ;; \
+		*) echo "Unsupported architecture: $$arch"; exit 1 ;; \
+	esac; \
+	echo "Downloading $$TLRC_RELEASE for $(TLDR_VERSION)..."; \
+	wget -q "https://github.com/tldr-pages/tlrc/releases/download/v$(TLDR_VERSION)/$$TLRC_RELEASE.tar.gz"; \
+	mkdir -p "$$TLRC_RELEASE"; \
+	tar -xf "$$TLRC_RELEASE.tar.gz" -C "$$TLRC_RELEASE"; \
+	rm -f "$$TLRC_RELEASE.tar.gz"; \
+	[ -f "$$TLRC_RELEASE/tldr" ] || { echo "Unexpected tarball layout: $$TLRC_RELEASE/tldr not found"; exit 1; }; \
+	echo "$$TLRC_RELEASE" > .tlrc_release_name
+
+override_dh_auto_install:
+	@TLRC_RELEASE=$$(cat .tlrc_release_name); \
+	install -D -m 755 "$$TLRC_RELEASE/tldr" debian/tldr/usr/bin/tldr; \
+	install -D -m 644 "$$TLRC_RELEASE/tldr.1" debian/tldr/usr/share/man/man1/tldr.1; \
+	install -D -m 644 "$$TLRC_RELEASE/completions/tldr.bash" debian/tldr/usr/share/bash-completion/completions/tldr; \
+	install -D -m 644 "$$TLRC_RELEASE/completions/tldr.fish" debian/tldr/usr/share/fish/vendor_completions.d/tldr.fish; \
+	install -D -m 644 "$$TLRC_RELEASE/completions/_tldr" debian/tldr/usr/share/zsh/vendor-completions/_tldr
+
+override_dh_auto_test:
+
+override_dh_auto_clean:
+	@if [ -f .tlrc_release_name ]; then \
+		TLRC_RELEASE=$$(cat .tlrc_release_name); \
+		rm -rf "$$TLRC_RELEASE" .tlrc_release_name || true; \
+	fi
+
+override_dh_strip:
+
+override_dh_shlibdeps:
