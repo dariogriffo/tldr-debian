@@ -67,35 +67,33 @@ build_architecture() {
         return 1
     fi
 
-    # Build packages for the supported Debian distributions (trixie and later)
-    declare -a arr=("trixie" "forky" "sid")
+    # One package for every suite: upstream ships one binary per architecture,
+    # so only the old ~<suite> version suffix ever differed. The fixed ~griffo
+    # keeps it below the distro's own build of the same version. Debian trixie
+    # and later only: the mirror links it into those suites alone.
+    FULL_VERSION="$tldr_VERSION-${BUILD_VERSION}~griffo_${build_arch}"
+    echo "  Building $FULL_VERSION"
 
-    for dist in "${arr[@]}"; do
-        FULL_VERSION="$tldr_VERSION-${BUILD_VERSION}~${dist}_${build_arch}"
-        echo "  Building $FULL_VERSION"
+    if ! docker build . -t "tldr-$build_arch" \
+        --build-arg tldr_VERSION="$tldr_VERSION" \
+        --build-arg BUILD_VERSION="$BUILD_VERSION" \
+        --build-arg FULL_VERSION="$FULL_VERSION" \
+        --build-arg ARCH="$build_arch" \
+        --build-arg TLRC_RELEASE="$tlrc_release"; then
+        echo "❌ Failed to build Docker image for $build_arch"
+        return 1
+    fi
 
-        if ! docker build . -t "tldr-$dist-$build_arch" \
-            --build-arg DEBIAN_DIST="$dist" \
-            --build-arg tldr_VERSION="$tldr_VERSION" \
-            --build-arg BUILD_VERSION="$BUILD_VERSION" \
-            --build-arg FULL_VERSION="$FULL_VERSION" \
-            --build-arg ARCH="$build_arch" \
-            --build-arg TLRC_RELEASE="$tlrc_release"; then
-            echo "❌ Failed to build Docker image for $dist on $build_arch"
-            return 1
-        fi
+    id="$(docker create "tldr-$build_arch")"
+    if ! docker cp "$id:/tldr_$FULL_VERSION.deb" - > "./tldr_$FULL_VERSION.deb"; then
+        echo "❌ Failed to extract .deb package for $build_arch"
+        return 1
+    fi
 
-        id="$(docker create "tldr-$dist-$build_arch")"
-        if ! docker cp "$id:/tldr_$FULL_VERSION.deb" - > "./tldr_$FULL_VERSION.deb"; then
-            echo "❌ Failed to extract .deb package for $dist on $build_arch"
-            return 1
-        fi
-
-        if ! tar -xf "./tldr_$FULL_VERSION.deb"; then
-            echo "❌ Failed to extract .deb contents for $dist on $build_arch"
-            return 1
-        fi
-    done
+    if ! tar -xf "./tldr_$FULL_VERSION.deb"; then
+        echo "❌ Failed to extract .deb contents for $build_arch"
+        return 1
+    fi
 
     # Clean up extracted directory
     rm -rf "$tlrc_release" || true

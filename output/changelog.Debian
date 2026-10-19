@@ -1,4 +1,4 @@
-tldr (FULL_VERSION) DIST; urgency=low
+tldr (FULL_VERSION) stable; urgency=low
 
   ## v1.13.1 (2026-05-22)
 
