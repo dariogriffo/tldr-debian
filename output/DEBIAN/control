@@ -6,7 +6,6 @@ Homepage: https://tldr.sh/tlrc
 Package: tldr
 Version: tldr_VERSION-BUILD_VERSION~griffo
 Architecture: SUPPORTED_ARCHITECTURES
-Depends: 
 Conflicts: tealdeer, tlrc
 Replaces: tealdeer
 Description: official tldr client written in Rust (tlrc)
